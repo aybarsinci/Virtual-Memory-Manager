@@ -141,10 +141,7 @@ int main(int argc, const char *argv[])
           physical_page = free_page;  // allocating the next frame
           free_page++;
         
-          /*if(counter == PAGES) {
-            free_page = 0;
-          }*/
-
+          
           pagetable[logical_page] = physical_page;  // updating page table with the new frame
           
 
