@@ -86,7 +86,7 @@ int main(int argc, const char *argv[])
   int backing_fd = open(backing_filename, O_RDONLY);
   backing = mmap(0, MEMORY_SIZE, PROT_READ, MAP_PRIVATE, backing_fd, 0); 
 
-  FILE *backing_f = fopen(argv[1], "rb");
+  FILE *backing_f = fopen(argv[1], "rb");   // used f open to get the contents of BACKING_STORE.bin did not used mmap 
 
 
   const char *input_filename = argv[2];
@@ -109,9 +109,9 @@ int main(int argc, const char *argv[])
   // Number of the next unallocated physical page in main memory
   unsigned char free_page = 0;
 
-  int counter = 0;
+  unsigned char counter = 0;
 
-  int memindex = 0;
+  
 
   
   while (fgets(buffer, BUFFER_SIZE, input_fp) != NULL) {
@@ -136,39 +136,23 @@ int main(int argc, const char *argv[])
       // Page fault
       if (physical_page == -1) {
           /* TODO */
-          /*page_faults++;
+          page_faults++;
 
+          physical_page = free_page;  // allocating the next frame
+          free_page++;
+        
+          /*if(counter == PAGES) {
+            free_page = 0;
+          }*/
 
-          physical_page = counter;
-          counter++;
+          pagetable[logical_page] = physical_page;  // updating page table with the new frame
           
-          if(counter == PAGE_SIZE) {
-            counter = 0;
-          }
 
-          pagetable[logical_page] = physical_page;
+          fseek(backing_f, logical_page * PAGE_SIZE, SEEK_SET);     //  getting the contens from BACKING_STORE.bin
+          fread(main_memory + physical_page * PAGE_SIZE, sizeof(signed char), PAGE_SIZE, backing_f);  // writing them on the new frame of the main memory
+          //printf("page fault\n");
+
           
-
-          fseek(backing_f, logical_page * PAGE_SIZE, SEEK_SET);
-
-          fread(main_memory + physical_page * PAGE_SIZE, sizeof(signed char), PAGE_SIZE, backing_f);
-
-
-          printf("page fault\n");*/
-
-          if(memindex != -1) {
-            memcpy(main_memory + memindex, backing + logical_page, PAGE_SIZE);
-            physical_page = memindex;
-
-            pagetable[logical_page] = memindex;
-            if(memindex < MEMORY_SIZE - PAGE_SIZE) {
-              memindex += PAGE_SIZE;
-            } else {
-              memindex = -1;
-            }
-
-          }
-
       }
 
       add_to_tlb(logical_page, physical_page);
@@ -185,6 +169,8 @@ int main(int argc, const char *argv[])
   printf("Page Fault Rate = %.3f\n", page_faults / (1. * total_addresses));
   printf("TLB Hits = %d\n", tlb_hits);
   printf("TLB Hit Rate = %.3f\n", tlb_hits / (1. * total_addresses));
+
+   
   
   return 0;
 }
