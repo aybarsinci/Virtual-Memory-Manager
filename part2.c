@@ -11,14 +11,15 @@
 #include <string.h>
 
 #define TLB_SIZE 16
-#define PAGES 256
+#define PAGES 1024
 #define PAGE_MASK /* TODO */ 0b1111111111
 
 #define PAGE_SIZE 1024
+#define FRAMES 256
 #define OFFSET_BITS 10
 #define OFFSET_MASK /* TODO */ 0b1111111111
 
-#define MEMORY_SIZE PAGES * PAGE_SIZE
+#define MEMORY_SIZE FRAMES * PAGE_SIZE
 
 // Max number of characters per line of input file to read.
 #define BUFFER_SIZE 10
@@ -109,7 +110,7 @@ int main(int argc, const char *argv[])
   // Number of the next unallocated physical page in main memory
   unsigned char free_page = 0;
 
-  unsigned char counter = 0;
+  int counter = 0;
 
   
 
@@ -137,13 +138,13 @@ int main(int argc, const char *argv[])
       if (physical_page == -1) {
           /* TODO */
           page_faults++;
-
+          
           physical_page = free_page;  // allocating the next frame
           free_page++;
         
-          /*if(counter == PAGES) {
+          if(free_page == FRAMES) {   // getting index of the memory space to fifo
             free_page = 0;
-          }*/
+          }
 
           pagetable[logical_page] = physical_page;  // updating page table with the new frame
           
@@ -151,7 +152,8 @@ int main(int argc, const char *argv[])
           fseek(backing_f, logical_page * PAGE_SIZE, SEEK_SET);     //  getting the contens from BACKING_STORE.bin
           fread(main_memory + physical_page * PAGE_SIZE, sizeof(signed char), PAGE_SIZE, backing_f);  // writing them on the new frame of the main memory
           //printf("page fault\n");
-
+          //printf("free page %d\n", free_page);
+        
           
       }
 
